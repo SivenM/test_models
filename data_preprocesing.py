@@ -180,7 +180,7 @@ class EncodeData:
         X, Y, img_names = self.create_bg_data()
         img_numbers = X.shape[0]
         treshold = img_numbers - test_size
-        return X[treshold:], Y[treshold:], img_names[treshold:]
+        return (X[treshold:], Y[treshold:], img_names[treshold:])
 
     def create_test_people_dataset(self):
         X, Y = self._encode() 
@@ -192,7 +192,7 @@ class EncodeData:
         X_test = X[treshold:]
         Y_test = Y[treshold:]
         img_names = self.image_name_list[treshold:]
-        return X_test, Y_test, img_names 
+        return (X_test, Y_test, img_names) 
 
 
 class JsonWriter:
