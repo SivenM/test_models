@@ -168,20 +168,19 @@ class EncodeData:
         X_train = X / 255       
         cls = tf.ones((Y.shape[0], 1), dtype=tf.float32)
         Y_train = self.label_encoder.encode_batch(Y, cls)
-        return X_train, Y_train
+        return X_train, Y_train, 
 
     def create_bg_data(self):
         X, Y = self._encode() 
         X_train = X / 255
-        Y_train = self.label_encoder.encode_bg(Y)
-        img_names = self.image_name_list[treshold:]
-        return X_train, Y_train, img_names  
+        img_names = self.image_name_list
+        return X_train, Y, img_names  
 
     def create_test_bg_dataset(self, test_size):
         X, Y, img_names = self.create_bg_data()
         img_numbers = X.shape[0]
         treshold = img_numbers - test_size
-        return X[treshold:], Y[treshold:], img_names
+        return X[treshold:], Y[treshold:], img_names[treshold:]
 
     def create_test_people_dataset(self):
         X, Y = self._encode() 
@@ -191,7 +190,6 @@ class EncodeData:
         treshold = X.shape[0] - treshold
         #X_train = X[:treshold]
         X_test = X[treshold:]
-        Y_train = self.label_encoder.encode_batch(Y[:treshold], cls)
         Y_test = Y[treshold:]
         img_names = self.image_name_list[treshold:]
         return X_test, Y_test, img_names 
@@ -209,10 +207,21 @@ class JsonWriter:
             json.dump(data, write_file, ensure_ascii=False) 
 
     def create_data(self, model_name, img_name, boxes, cls_predictions, gt_true):
-        return {"img_name": img_name,
+        return {
+                "model_name": model_name,
+                "img_name": img_name,
                 "boxes": boxes, 
                 "cls_predictions": cls_predictions, 
                 "gt_true": gt_true}
 
-    def write(self, img_name):
-        pass
+    def write(self,
+              model_name,
+              img_name,
+              boxes,
+              cls_predictions,
+              gt_true,
+              ):
+        
+        save_path = self.json_dir + '/' + model_name + '_' + img_name + '.json'
+        data = self.create_data(model_name, img_name, boxes, cls_predictions, gt_true)
+        self.write_json(save_path, data)
