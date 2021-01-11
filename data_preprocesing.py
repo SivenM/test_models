@@ -113,9 +113,8 @@ class LabelEncoder:
             labels = labels.write(i, label)
         return labels.stack()
 
-    def encode_bg(self, gt_boxes):
-        images_shape = tf.shape(gt_boxes)
-        batch_size = images_shape[0]
+    def encode_bg(self, images_num):
+        batch_size = images_num 
 
         labels = tf.TensorArray(dtype=tf.float32, size=batch_size, dynamic_size=True)
         for i in range(batch_size):
@@ -130,7 +129,7 @@ class LabelEncoder:
 
 class EncodeData:
 
-    def __init__(self, image_path, labels_path):
+    def __init__(self, image_path, labels_path=None):
         self.image_path = image_path
         self.labels_path = labels_path
         self.image_name_list = self._get_image_names()
@@ -141,7 +140,10 @@ class EncodeData:
         return os.listdir(self.image_path)
 
     def _read_labels(self):
-        return pd.read_csv(self.labels_path)
+        if self.labels_path != None:
+            return pd.read_csv(self.labels_path)
+        else:
+            return 0
 
     def _encode(self):
         x = []
@@ -171,10 +173,10 @@ class EncodeData:
         return X_train, Y_train, 
 
     def create_bg_data(self):
-        X, Y = self._encode() 
+        X = self._encode() 
         X_train = X / 255
         img_names = self.image_name_list
-        return X_train, Y, img_names  
+        return X_train, img_names  
 
     def create_test_bg_dataset(self, test_size):
         X, Y, img_names = self.create_bg_data()
@@ -215,6 +217,7 @@ class JsonWriter:
                 "gt_true": gt_true}
 
     def write(self,
+              key,
               model_name,
               img_name,
               boxes,
@@ -222,6 +225,6 @@ class JsonWriter:
               gt_true,
               ):
         
-        save_path = self.json_dir + '/' + model_name + '_' + img_name + '.json'
+        save_path = self.json_dir + '/' + model_name + '_' + 'tp' + '_' + img_name + '.json'
         data = self.create_data(model_name, img_name, boxes, cls_predictions, gt_true)
         self.write_json(save_path, data)
