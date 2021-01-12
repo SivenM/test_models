@@ -178,11 +178,10 @@ class EncodeData:
         img_names = self.image_name_list
         return X_train, img_names  
 
-    def create_test_bg_dataset(self, test_size):
+    def create_test_bg_dataset(self):
         X, Y, img_names = self.create_bg_data()
         img_numbers = X.shape[0]
-        treshold = img_numbers - test_size
-        return (X[treshold:], Y[treshold:], img_names[treshold:])
+        return (X, Y, img_names)
 
     def create_test_people_dataset(self):
         X, Y = self._encode() 
