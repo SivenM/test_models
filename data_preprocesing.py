@@ -174,10 +174,10 @@ class EncodeData:
         return X_train, Y_train, 
 
     def create_bg_data(self):
-        X = self._encode() 
+        X, Y = self._encode() 
         X_train = X / 255
         img_names = self.image_name_list
-        return X_train, img_names  
+        return X_train, Y, img_names  
 
     def create_test_bg_dataset(self):
         """
