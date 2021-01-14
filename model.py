@@ -112,6 +112,6 @@ class SSD:
         return img_array, human_box_list
 
     def test(self, img_array):
-        image_array = tf.reshape(image_array, ((1,) + image_array.shape))
-        boxes, cls_predictions = self.get_boxes_cls(img_array)
+        image_array = tf.reshape(img_array, ((1,) + img_array.shape))
+        boxes, cls_predictions = self.get_boxes_cls(image_array)
         return boxes, cls_predictions 
