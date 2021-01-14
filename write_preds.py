@@ -14,7 +14,7 @@ def create_dataset(path_data_dict):
         который хранит матрицу изображения, аннотацию и имя изображения
     """
     data = {}
-    for key, data_path in data_path_dict:
+    for key, data_path in path_data_dict:
         encode_data = EncodeData(data_path[0], data_path[1])        
         if key == 'tp':
             tp = encode_data.create_test_people_dataset()
@@ -36,7 +36,7 @@ def main(json_dir, path_data_dict, model_path_list):
     5. цикл повторяется с 2ого по 4ый пункт пока не прогонятся все модели.
     """
 
-    test_datasets = create_dataset(path_data_dict, test_size)
+    test_datasets = create_dataset(path_data_dict)
     
     for model_path in model_path_list:
         model_name = model_path.split('/')[-1]
