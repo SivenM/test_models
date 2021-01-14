@@ -14,7 +14,7 @@ def create_dataset(path_data_dict):
         который хранит матрицу изображения, аннотацию и имя изображения
     """
     data = {}
-    for key, data_path in path_data_dict:
+    for key, data_path in path_data_dict.items():
         encode_data = EncodeData(data_path[0], data_path[1])        
         if key == 'tp':
             tp = encode_data.create_test_people_dataset()
