@@ -1,6 +1,6 @@
 from data_preprocesing import EncodeData, JsonWriter
 from model import SSD
-
+import os
 
 def create_dataset(path_data_dict):
     """
@@ -73,5 +73,4 @@ if __name__ == "__main__":
                              'F:\\ieos\\data\\train_images\\test_fn_527_ann.csv'
                              ],
                       } 
-    
-          
+
