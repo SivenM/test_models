@@ -44,7 +44,7 @@ def main(json_dir, path_data_dict, model_path_list):
         os.mkdir(json_path)
         json_writer = JsonWriter(json_path)
         model = SSD(model_path)
-        for key, dataset in test_datasets:
+        for key, dataset in test_datasets.items():
             x_test = dataset[0]
             y_test = dataset[1]
             img_names = dataset[2]
