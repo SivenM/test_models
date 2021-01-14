@@ -72,4 +72,6 @@ if __name__ == "__main__":
                       'bg': ['F:\\ieos\\data\\train_images\\set_test_fn_imgs',
                              'F:\\ieos\\data\\train_images\\test_fn_527_ann.csv'
                              ],
-                      }       
+                      } 
+    
+          

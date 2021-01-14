@@ -2,6 +2,7 @@ from utils import *
 import tensorflow as tf
 import numpy as np
 import os
+import pandas as pd
 
 class LabelEncoder:
     """Трансформирует аннотации в таргеты для обучения.
