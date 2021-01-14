@@ -179,11 +179,17 @@ class EncodeData:
         return X_train, img_names  
 
     def create_test_bg_dataset(self):
+        """
+        Создает тестовые false negative данные
+        """
         X, Y, img_names = self.create_bg_data()
         img_numbers = X.shape[0]
         return (X, Y, img_names)
 
     def create_test_people_dataset(self):
+        """
+        Создает тестовые true positive данные
+        """
         X, Y = self._encode() 
         X = X / 255       
         cls = tf.ones((Y.shape[0], 1), dtype=tf.float32)
@@ -223,7 +229,9 @@ class JsonWriter:
               cls_predictions,
               gt_true,
               ):
-        
+        """
+        Пишет данные модели и ее предсказания в json файл.
+        """
         save_path = self.json_dir + '/' + model_name + '_' + 'tp' + '_' + img_name + '.json'
         data = self.create_data(model_name, img_name, boxes, cls_predictions, gt_true)
         self.write_json(save_path, data)

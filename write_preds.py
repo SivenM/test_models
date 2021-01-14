@@ -2,7 +2,7 @@ from data_preprocesing import EncodeData, JsonWriter
 from model import SSD
 
 
-def create_dataset(path_data_dict, test_size):
+def create_dataset(path_data_dict):
     """
     Создает тестовый датасет для проверки моделей.
 
@@ -20,11 +20,11 @@ def create_dataset(path_data_dict, test_size):
             tp = encode_data.create_test_people_dataset()
             data['tp'] = tp
         elif key == 'bg':
-            bg = encode_data.create_test_bg_dataset(test_size)
+            bg = encode_data.create_test_bg_dataset()
             data['bg'] = bg
     return data
 
-def main(json_dir, path_data_dict, model_path_list, test_size):
+def main(json_dir, path_data_dict, model_path_list):
     
     """
     Основной цикл программы.
@@ -58,14 +58,18 @@ def main(json_dir, path_data_dict, model_path_list, test_size):
                     key,
                     model_name,
                     img_name,
-                    boxes,
-                    cls_predictions,
+                    boxes.numpy().tolist(),
+                    cls_predictions.numpy().tolist(),
                     gt_true,
                 )
     
 
 
 if __name__ == "__main__":
-    path_data_dict = {'tp': [],
-                      'bg': [],
+    path_data_dict = {'tp': ['F:\\ieos\\data\\train_images\\train_images_32',
+                             'F:\\ieos\\data\\train_images\\train_labels_32.csv'
+                             ],
+                      'bg': ['F:\\ieos\\data\\train_images\\set_test_fn_imgs',
+                             'F:\\ieos\\data\\train_images\\test_fn_527_ann.csv'
+                             ],
                       }       
