@@ -24,7 +24,7 @@ def create_dataset(path_data_dict):
             data['bg'] = bg
     return data
 
-def main(json_dir, path_data_dict, model_path_list):
+def predict_data(json_dir, path_data_dict, model_path_list):
     
     """
     Основной цикл программы.
@@ -36,15 +36,22 @@ def main(json_dir, path_data_dict, model_path_list):
     5. цикл повторяется с 2ого по 4ый пункт пока не прогонятся все модели.
     """
 
+    print("Загружаю датасет")
     test_datasets = create_dataset(path_data_dict)
-    
+    print("Датасет загружен")
+    print("="*80)
+    print(f"количество tp изображений: {test_datasets['tp'][0].shape[0]}")
+    print(f"количество tp изображений: {test_datasets['bg'][0].shape[0]}")
     for model_path in model_path_list:
-        model_name = model_path.split('/')[-1]
-        json_path = json_dir + '/' + model_name.split('.')[0]
-        os.mkdir(json_path)
-        json_writer = JsonWriter(json_path)
+        model_name = model_path.split('\\')[-1]
+        print(f"\nИмя модели: {model_name}")
+        json_model_dir_path = os.path.join(json_dir, model_name.split('.')[0])
+        os.mkdir(json_model_dir_path)
         model = SSD(model_path)
         for key, dataset in test_datasets.items():
+            json_save_path = os.path.join(json_model_dir_path, key)
+            os.mkdir(json_save_path)
+            json_writer = JsonWriter(json_save_path)
             x_test = dataset[0]
             y_test = dataset[1]
             img_names = dataset[2]
@@ -52,7 +59,6 @@ def main(json_dir, path_data_dict, model_path_list):
                 img_array = x_test[i]
                 gt_true = y_test[i]
                 img_name = img_names[i]
-
                 boxes, cls_predictions = model.test(img_array)
                 json_writer.write(
                     key,
@@ -60,17 +66,18 @@ def main(json_dir, path_data_dict, model_path_list):
                     img_name,
                     boxes.numpy().tolist(),
                     cls_predictions.numpy().tolist(),
-                    gt_true,
+                    gt_true.numpy().tolist(),
                 )
+                print(f"Результаты прогона тестового изображения {img_name} успешно записаны!")
     
 
 
-if __name__ == "__main__":
-    path_data_dict = {'tp': ['F:\\ieos\\data\\train_images\\train_images_32',
-                             'F:\\ieos\\data\\train_images\\train_labels_32.csv'
-                             ],
-                      'bg': ['F:\\ieos\\data\\train_images\\set_test_fn_imgs',
-                             'F:\\ieos\\data\\train_images\\test_fn_527_ann.csv'
-                             ],
-                      } 
+#if __name__ == "__main__":
+#    path_data_dict = {'tp': ['F:\\ieos\\data\\train_images\\train_images_32',
+#                             'F:\\ieos\\data\\train_images\\train_labels_32.csv'
+#                             ],
+#                      'bg': ['F:\\ieos\\data\\train_images\\set_test_fn_imgs',
+#                             'F:\\ieos\\data\\train_images\\test_fn_527_ann.csv'
+#                             ],
+#                      } 
 
