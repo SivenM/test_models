@@ -237,3 +237,22 @@ class JsonWriter:
         save_path = self.json_dir + '/' + model_name + '_' + 'tp' + '_' + img_name + '.json'
         data = self.create_data(model_name, img_name, boxes, cls_predictions, gt_true)
         self.write_json(save_path, data)
+
+
+class JsonReader:
+    
+    def __init__(self, json_test_data):
+        self.main_dir = json_test_data
+        self.dir_name_list = _get_dir_names()
+        
+
+    def _get_dir_names(self):
+        return os.listdir(self.main_dir)
+
+    def get_json_data(self, json_path):
+        with open(json_path, 'rb') as read_file:
+            ann = json.load(read_file, encoding="utf8")
+        return ann
+
+    def read(self, json_path):
+        pass

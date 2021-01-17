@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import matplotlib.pylab as plt
+import json
 
 def swap_xy(boxes):
     return tf.stack([boxes[:, 1], boxes[:, 0], boxes[:, 3], boxes[:, 2]], axis=-1)
@@ -206,6 +207,10 @@ def evaluate(model, test_img):
     return human_box_list
 
 def get_json_data(json_path):
+    """
+    читает json файл и вызворащает dict
+    """
+
     with open(json_path, 'rb') as read_file:
         ann = json.load(read_file, encoding="utf8")
     return ann
