@@ -49,7 +49,7 @@ class TresholdDataWriter:
             boxes, cls_conf, gt_true, img_name = self.parse_data(data)
             good_boxes_idx = self.tmaster.get_idx_boxes(boxes, gt_true)                
             if len(good_boxes_idx) == 0:
-                human_confs.loc[i] = [img_name, np.amax(cls_conf[:,0])]
+                human_confs.loc[i] = [img_name, 0]
             else:
                 human_conf_max = self.tmaster.get_human_conf(boxes, good_boxes_idx, cls_conf)
                 human_confs.loc[i] = [img_name, human_conf_max]

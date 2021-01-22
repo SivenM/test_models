@@ -321,10 +321,7 @@ class TrecholdMaster:
         human_conf = np.array(human_conf)
         human_conf_idx = np.where(human_conf > 0.75)[0].tolist()
         #print(human_conf_idx)
-        human_conf = human_conf[human_conf > 0.75].tolist()
-        if len(human_conf) != 0:
-            return max(human_conf)
-        else:
-            return '-'
+        #human_conf = human_conf[human_conf > 0.75].tolist()
+        return max(human_conf)
         #human_boxes = get_human_boxes(boxes, good_boxes_idx, human_conf_idx)
 
