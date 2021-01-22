@@ -208,7 +208,7 @@ class JsonWriter:
     """
     Записывает данные предсказаний модели
     """
-    def __init__(self, json_dir):
+    def __init__(self, json_dir=None):
         self.json_dir = json_dir
 
     def write_json(self, save_path, data):
@@ -240,19 +240,91 @@ class JsonWriter:
 
 
 class JsonReader:
-    
-    def __init__(self, json_test_data):
+    """
+    Читает json файлы
+    """
+    def __init__(self, json_test_data=None):
         self.main_dir = json_test_data
-        self.dir_name_list = _get_dir_names()
-        
+        self.dir_name_list = self._get_dir_names()
+        self.tpbg_list = ['tp', 'bg']
+
+    def _get_json_names(self, dir_path):
+        return os.listdir(dir_path)
 
     def _get_dir_names(self):
         return os.listdir(self.main_dir)
 
     def get_json_data(self, json_path):
         with open(json_path, 'rb') as read_file:
-            ann = json.load(read_file, encoding="utf8")
-        return ann
+            data = json.load(read_file, encoding="utf8")
+        return data
 
-    def read(self, json_path):
-        pass
+
+class TrecholdMaster:
+    
+    def __init__(self):
+        self.a = 1
+
+
+    def compute_iou(self, boxes, gt_true):
+        """
+        Считает IOU между gt_true И предсказанными боксами
+        """
+        lu = np.maximum(boxes[:, :2], gt_true[:2])
+        rd = np.minimum(boxes[:, 2:], gt_true[2:])
+        intersection = np.maximum(0.0, rd - lu)
+        intersection_area = intersection[:, 0] * intersection[:, 1]
+        box1_area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+        box2_area = (gt_true[2] - gt_true[0]) * (gt_true[3] - gt_true[1])
+        union_area = np.maximum(box1_area + box2_area - intersection_area, 1e-8)
+        return np.clip(intersection_area / union_area, 0.0, 1.0)
+        #return intersection_area / box1_area
+
+    def get_idx_boxes(self, boxes, gt_true):
+        
+        """
+        Считает IOU и возвращет индексы боксов, 
+        значения которых выше 0.75
+        """
+        iou = self.compute_iou(boxes, gt_true)
+        good_boxes_idx = list(np.where(iou > 0.75)[0])
+        return good_boxes_idx
+
+    def get_boxes_idx(self, good_boxes_idx, human_conf_idx):
+        """
+        Получает индексы боксов человека с наибольшими конфиденсами
+        """
+        humax_boxes = []
+        for idx in human_box_idx:
+            human_boxes.append(good_boxes_idx[idx])
+        return human_boxes_idx
+
+    def get_human_boxes(self, boxes, good_boxes_idx, human_conf_idx):
+        """
+        Получает боксы с высоким конфиденсом
+        """
+        boxes = boxes.tolist()
+        human_boxes = []
+        human_boxes_idx = self.get_boxes_idx(good_boxes_idx, human_conf_idx)
+        for idx in human_boxes_idx:
+            human_boxes.append(boxes[idx])
+        return human_boxes
+
+    def get_human_conf(self, boxes, good_boxes_idx, cls_predictions):
+        """
+        Получает высокий конфиденс и соответствующие боксы
+        """
+        #print('gbi', good_boxes_idx)
+        human_conf = []
+        for idx in good_boxes_idx:
+            human_conf.append(cls_predictions[idx][0])
+        human_conf = np.array(human_conf)
+        human_conf_idx = np.where(human_conf > 0.75)[0].tolist()
+        #print(human_conf_idx)
+        human_conf = human_conf[human_conf > 0.75].tolist()
+        if len(human_conf) != 0:
+            return max(human_conf)
+        else:
+            return '-'
+        #human_boxes = get_human_boxes(boxes, good_boxes_idx, human_conf_idx)
+

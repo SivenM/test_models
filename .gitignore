@@ -1,2 +1,5 @@
 __pycache__
 testing_files/
+.vscode/
+.ipynb_checkpoints
+Untitled.ipynb
