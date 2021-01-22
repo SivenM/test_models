@@ -95,5 +95,5 @@ class TresholdDataWriter:
 
 if __name__ == "__main__":
     main_test_json_path = 'testing_files\\data\\json_test_data'
-    output_path = 'testing_files\\data\\json_output_data'
+    output_path = 'testing_files\\data\\csv_output_data'
     TresholdDataWriter(main_test_json_path, output_path)
