@@ -234,7 +234,7 @@ class JsonWriter:
         """
         Пишет данные модели и ее предсказания в json файл.
         """
-        save_path = self.json_dir + '/' + model_name + '_' + 'tp' + '_' + img_name + '.json'
+        save_path = self.json_dir + '\\' + model_name + '_' + key + '_' + img_name + '.json'
         data = self.create_data(model_name, img_name, boxes, cls_predictions, gt_true)
         self.write_json(save_path, data)
 
