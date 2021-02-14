@@ -7,25 +7,39 @@ from write_preds import *
 """
 
 model_path_list = [
-    'testing_files\\data\\models\\model_32_bg2500.h5',
-    'testing_files\\data\\models\\model_32_bg5000.h5',
-    'testing_files\\data\\models\\model_32_bg8000.h5',
-    'testing_files\\data\\models\\model_32_bg10000.h5',
-    'testing_files\\data\\models\\model_32_bg12000.h5',
-    'testing_files\\data\\models\\model_32_ep500_bg_2500.h5',
-    'testing_files\\data\\models\\model_32_ep500_bg_5000.h5',
-    'testing_files\\data\\models\\model_32_ep500_bg_8000.h5',
-    'testing_files\\data\\models\\model_32_ep500_bg_10000.h5',
-    'testing_files\\data\\models\\model_32_ep500_bg_12000.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio1_k0.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio1_k1.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio1_k2.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio1_k3.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio1_k4.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio2_k0.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio2_k1.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio2_k2.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio2_k3.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio2_k4.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio3_k0.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio3_k1.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio3_k2.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio3_k3.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio3_k4.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio4_k0.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio4_k1.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio4_k2.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio4_k3.h5',
+    'testing_files\\ratio_data2\\models\\m32_ratio4_k4.h5',
     ]
 
-path_data_dict = {'tp': ['testing_files\\data\\train_images_32',
-                          'testing_files\\data\\train_labels_32.csv'
-                          ],
-                   'bg': ['testing_files\\data\\test_fn_527',
-                          'testing_files\\data\\test_fn_527_ann.csv'
-                          ],
-                 } 
-json_dir = 'testing_files\\data\\json_test_data'        
+model_path = ['testing_files\\ratio_data3\\models\\m32_ratio1_k0.h5']
 
-predict_data(json_dir, path_data_dict, model_path_list)
+path_data_dict = {
+                    'tp': [
+                         'testing_files\\data\\train_images_32',
+                         'testing_files\\data\\train_labels_32.csv'
+                        ],
+                   'bg': [
+                          'testing_files\\data\\test_fn_527',
+                          'testing_files\\data\\test_fn_527_ann.csv'
+                         ],
+                 } 
+json_dir = 'testing_files\\ratio_data3\\json_preds_data'        
+predict_data(json_dir, path_data_dict, model_path)

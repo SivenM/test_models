@@ -1,3 +1,10 @@
+"""
+Программа находит боксы с IoU > 0.75 и среди них берет max conf предикта.
+Результаты сохранятются в csv-файлы
+
+"""
+
+
 import os
 import numpy as np
 import data_preprocesing
@@ -11,7 +18,7 @@ import pandas as pd
 ######################################
 
 
-class TresholdDataWriter:
+class ConfDataWriter:
     
     def __init__(self, main_test_json_path, output_path):
         self.main_test_json_path = main_test_json_path
@@ -94,6 +101,6 @@ class TresholdDataWriter:
             self.get_bg_conf(model_name, dir_model_data, save_dir)
 
 if __name__ == "__main__":
-    main_test_json_path = 'testing_files\\data\\json_test_data'
-    output_path = 'testing_files\\data\\csv_output_data'
-    TresholdDataWriter(main_test_json_path, output_path)
+    main_test_json_path = 'testing_files\\ratio_data3\\json_preds_data'
+    output_path = 'testing_files\\ratio_data3\\csv_conf_data'
+    ConfDataWriter(main_test_json_path, output_path)
