@@ -1,8 +1,8 @@
 from data_preprocesing import EncodeData, JsonWriter
-from model import SSD
+from model import SSD, Model2head
 import os
 
-def create_dataset(path_data_dict):
+def create_dataset(path_data_dict, img_size):
     """
     Создает тестовый датасет для проверки моделей.
 
@@ -14,17 +14,27 @@ def create_dataset(path_data_dict):
         который хранит матрицу изображения, аннотацию и имя изображения
     """
     data = {}
-    for key, data_path in path_data_dict.items():
-        encode_data = EncodeData(data_path[0], data_path[1])        
-        if key == 'tp':
-            tp = encode_data.create_test_people_dataset()
-            data['tp'] = tp
-        elif key == 'bg':
-            bg = encode_data.create_test_bg_dataset()
-            data['bg'] = bg
+    if img_size == 32:
+        for key, data_path in path_data_dict.items():
+            encode_data = EncodeData(data_path[0], data_path[1])        
+            if key == 'tp':
+                tp = encode_data.create_test_people_dataset()
+                data['tp'] = tp
+            elif key == 'bg':
+                bg = encode_data.create_test_bg_dataset()
+                data['bg'] = bg
+    elif img_size == 64:
+        for key, data_path in path_data_dict.items():
+            encode_data = EncodeData(data_path[0], data_path[1])        
+            if key == 'tp':
+                tp = encode_data.create_test_people_dataset_64()
+                data['tp'] = tp
+            elif key == 'bg':
+                bg = encode_data.create_test_bg_dataset_64()
+                data['bg'] = bg
     return data
 
-def predict_data(json_dir, path_data_dict, model_path_list):
+def predict_data(json_dir, path_data_dict, model_path_list, img_size, model_type, quantized):
     
     """
     Основной цикл программы.
@@ -37,17 +47,27 @@ def predict_data(json_dir, path_data_dict, model_path_list):
     """
 
     print("Загружаю датасет")
-    test_datasets = create_dataset(path_data_dict)
+    test_datasets = create_dataset(path_data_dict, img_size)
     print("Датасет загружен")
     print("="*80)
     print(f"количество tp изображений: {test_datasets['tp'][0].shape[0]}")
     print(f"количество tp изображений: {test_datasets['bg'][0].shape[0]}")
+    os.mkdir(json_dir)
     for model_path in model_path_list:
         model_name = model_path.split('\\')[-1]
         print(f"\nИмя модели: {model_name}")
+        print('Прогон тестового набора...')
         json_model_dir_path = os.path.join(json_dir, model_name.split('.')[0])
         os.mkdir(json_model_dir_path)
-        model = SSD(model_path)
+        if model_type == '2head':
+            if quantized == '+':
+                q = True
+            else:
+                q = False
+
+            model = Model2head(model_path, q=q)
+        else:
+            model = SSD(model_path, img_size)
         for key, dataset in test_datasets.items():
             json_save_path = os.path.join(json_model_dir_path, key)
             os.mkdir(json_save_path)
@@ -59,16 +79,28 @@ def predict_data(json_dir, path_data_dict, model_path_list):
                 img_array = x_test[i]
                 gt_true = y_test[i]
                 img_name = img_names[i]
-                boxes, cls_predictions = model.test(img_array)
-                json_writer.write(
-                    key,
-                    model_name,
-                    img_name,
-                    boxes.numpy().tolist(),
-                    cls_predictions.numpy().tolist(),
-                    gt_true.numpy().tolist(),
-                )
-                print(f"Результаты прогона тестового изображения {img_name} успешно записаны!")
+                if model_type == '2head':
+                    boxes, cls_predictions = model.test(img_array)
+                    json_writer.write(
+                        key,
+                        model_name,
+                        img_name,
+                        boxes,
+                        cls_predictions,
+                        gt_true.numpy().tolist(),
+                        )
+                else:
+                    boxes, cls_predictions = model.test(img_array)
+                    json_writer.write(
+                        key,
+                        model_name,
+                        img_name,
+                        boxes.numpy().tolist(),
+                        cls_predictions.numpy().tolist(),
+                        gt_true.numpy().tolist(),
+                    )
+                #print(f"Результаты прогона тестового изображения {img_name} успешно записаны!")
+        
     
 
 

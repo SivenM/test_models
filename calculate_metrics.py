@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import os
 import json
+import argparse
 from sklearn.metrics import roc_auc_score
 
 
@@ -29,7 +30,7 @@ class TresholdFinder:
             json.dump(data, write_file, ensure_ascii=False)
             
 
-    def save_auc_roc_to_json(self, save_path, model_name, tpr, fpr, treshold, auc_score):
+    def save_auc_roc_to_json(self, save_path, model_name, auc_score, tpr='', fpr='', treshold=''):
         data = {'tpr': tpr, 'fpr': fpr, 'treshold':treshold, 'auc': auc_score}
         json_name = 'roc_auc_data' + '_' + model_name + '.json' 
         path_to_save = os.path.join(save_path, json_name)
@@ -125,6 +126,7 @@ class TresholdFinder:
         return roc_auc_score(gt, conf_np)
 
     def main_for_acc(self, save_path):
+        os.mkdir(save_path)
         for i, dir_model_name in enumerate(self.dir_model_names):
             print(f'    Произвожу расчет порога модели {dir_model_name}^')
             csv_dir_path = os.path.join(self.main_dir, dir_model_name)
@@ -145,6 +147,7 @@ class TresholdFinder:
                 )
 
     def main_for_roc_auc(self, save_path):
+        os.mkdir(save_path)
         for i, dir_model_name in enumerate(self.dir_model_names):
             print(f'    Произвожу расчет roc модели {dir_model_name}')
             csv_dir_path = os.path.join(self.main_dir, dir_model_name)
@@ -155,21 +158,23 @@ class TresholdFinder:
             bg_df = self.read_csv(csv_bg_path)
             human_df = self.read_csv(csv_human_path)
             print('     Произвожу расчет и оценку...')
-            tpr_list, fpr_list, treshold_list = self.calculate_roc(bg_df, human_df)
+            #tpr_list, fpr_list, treshold_list = self.calculate_roc(bg_df, human_df)
             auc_score = self.calculate_auc(bg_df, human_df)
             self.save_auc_roc_to_json(
                 save_path, 
                 dir_model_name, 
-                tpr_list, 
-                fpr_list, 
-                treshold_list, 
                 auc_score
                 )
 
 if __name__ == "__main__":
-    data_path = 'testing_files\\ratio_data3\\csv_conf_data'
-    save_path_acc = 'testing_files\\ratio_data3\\result\\json_acc_data'
-    save_path_roc_auc = 'testing_files\\ratio_data3\\result\\json_roc_auc_data'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--cfg_file', dest='config', type=argparse.FileType('r'), default=None, help='cfg file in json format')
+    args = parser.parse_args()
+    if args.config:
+        config = json.load(args.config)
+        data_path = config['csv_conf_data']
+        save_path_acc = config['json_acc_data']
+        save_path_roc_auc = config['json_roc_auc_data']
     tf = TresholdFinder(data_path)
     tf.main_for_acc(save_path_acc)
     tf.main_for_roc_auc(save_path_roc_auc)

@@ -129,6 +129,81 @@ class LabelEncoder:
         return labels.stack()
 
 
+class LabelEncoder2:
+
+    def __init__(self):
+        self._anchor_box = create_prior_boxes2()
+
+    def _match_anchor_boxes(
+        self, anchor_boxes, gt_boxes, match_iou=0.4, ignore_iou=0.4
+    ):
+
+        iou_matrix = compute_iou1(anchor_boxes, gt_boxes)
+        max_iou = tf.reduce_max(iou_matrix, axis=1)
+        matched_gt_idx = tf.argmax(iou_matrix, axis=1)
+        positive_mask = tf.greater_equal(iou_matrix, match_iou)
+        negative_mask = tf.less(iou_matrix, ignore_iou)
+        ignore_mask = tf.logical_not(tf.logical_or(positive_mask, negative_mask))
+        return (
+            matched_gt_idx,
+            tf.cast(positive_mask, dtype=tf.float32),
+            tf.cast(ignore_mask, dtype=tf.float32),
+        )
+
+    def _compute_box_target(self, anchor_boxes, matched_gt_boxes):
+        box_target = tf.concat(
+            [
+                (matched_gt_boxes[:, :2] - anchor_boxes[:, :2]) / anchor_boxes[:, 2:],
+                tf.math.log(matched_gt_boxes[:, 2:] / anchor_boxes[:, 2:]),
+            ],
+            axis=-1,
+        )
+        #box_target = box_target / self._box_variance
+        return box_target
+
+    def _encode_sample(self, gt_boxes, cls_ids):
+        """Создает боксы и классифициет таргеты для одиночного сэмпла"""
+        anchor_boxes = self._anchor_box
+        gt_boxes = tf.cast(gt_boxes, dtype=tf.float32)
+        gt_boxes = tf.reshape(gt_boxes, ((1,) + gt_boxes.shape))
+        cls_ids = tf.cast(cls_ids, dtype=tf.float32)
+        matched_gt_idx, positive_mask, ignore_mask = self._match_anchor_boxes(
+            anchor_boxes, gt_boxes
+        )
+        gt_boxes = convert_to_xywh(gt_boxes)
+        box_target = self._compute_box_target(anchor_boxes, gt_boxes)
+        cls = tf.ones((3, 1), dtype=tf.float32)
+        cls_bg = tf.cast(tf.equal(cls, 0.), dtype=tf.float32)
+        label = tf.concat([box_target, cls], axis=1)
+        label = tf.concat([label, cls_bg], axis=1)
+        return label
+
+    def encode_batch(self, gt_boxes, cls_ids):
+        """Создает боксы и классифицирует таргеты для батча"""
+        images_shape = tf.shape(gt_boxes)
+        batch_size = images_shape[0]
+
+        labels = tf.TensorArray(dtype=tf.float32, size=batch_size, dynamic_size=True)
+        for i in range(batch_size):
+            label = self._encode_sample(gt_boxes[i], cls_ids[i])
+            labels = labels.write(i, label)
+        return labels.stack()
+
+    def encode_bg(self, gt_boxes):
+        images_shape = tf.shape(gt_boxes)
+        batch_size = images_shape[0]
+
+        labels = tf.TensorArray(dtype=tf.float32, size=batch_size, dynamic_size=True)
+        for i in range(batch_size):
+            label = tf.zeros([3, 4], dtype=tf.float32)
+            human_cls = tf.zeros([3, 1], dtype=tf.float32)
+            bg_cls = tf.ones([3, 1], dtype=tf.float32)
+            label = tf.concat([label, human_cls], axis=-1)
+            label = tf.concat([label, bg_cls], axis=-1)
+            labels = labels.write(i, label)
+        return labels.stack()
+
+
 class EncodeData:
 
     def __init__(self, image_path, labels_path=None):
@@ -147,15 +222,16 @@ class EncodeData:
         else:
             return 0
 
-    def _encode(self):
+    def _encode(self, img_size=(32, 32)):
         x = []
         y = []
+        img_names = []
         names_df = self.labels_df['filename']
         for image_name in self.image_name_list:
             image_path = self.image_path + '/' + image_name
             image = tf.keras.preprocessing.image.load_img(image_path,
                                                           color_mode = "grayscale",
-                                                          target_size=(32, 32))
+                                                          target_size=img_size)
             image = tf.keras.preprocessing.image.img_to_array(image)
             index_bbox = names_df.index[names_df == image_name]
             bbox_coords = self.labels_df.iloc[index_bbox[0], 4:]
@@ -165,7 +241,12 @@ class EncodeData:
                            bbox_coords['ymax']] 
             x.append(image)
             y.append(bbox_coords)
-        return tf.convert_to_tensor(x), tf.convert_to_tensor(y, dtype=tf.float32)
+            img_names.append(image_name)
+        if img_size == (32, 32):
+            return tf.convert_to_tensor(x), tf.convert_to_tensor(y, dtype=tf.float32)
+        else:
+            return tf.convert_to_tensor(x), tf.convert_to_tensor(y, dtype=tf.float32), img_names
+
 
     def create_tp_data(self):
         X, Y = self._encode() 
@@ -202,6 +283,16 @@ class EncodeData:
         Y_test = Y[treshold:]
         img_names = self.image_name_list[treshold:]
         return (X_test, Y_test, img_names) 
+    
+    def create_test_people_dataset_64(self):
+        X, Y, img_names = self._encode(img_size=(64, 64)) 
+        X = X / 255 
+        return (X, Y, img_names)
+        
+    def create_test_bg_dataset_64(self):
+        X, Y, img_names = self._encode(img_size=(64, 64)) 
+        X = X / 255
+        return (X, Y, img_names)
 
 
 class JsonWriter:
@@ -270,7 +361,11 @@ class TrecholdMaster:
         """
         Считает IOU между gt_true И предсказанными боксами
         """
-        lu = np.maximum(boxes[:, :2], gt_true[:2])
+        try:
+            lu = np.maximum(boxes[:, :2], gt_true[:2])
+        except:
+            print(boxes)
+            print(gt_true)
         rd = np.minimum(boxes[:, 2:], gt_true[2:])
         intersection = np.maximum(0.0, rd - lu)
         intersection_area = intersection[:, 0] * intersection[:, 1]
@@ -310,18 +405,37 @@ class TrecholdMaster:
             human_boxes.append(boxes[idx])
         return human_boxes
 
-    def get_human_conf(self, boxes, good_boxes_idx, cls_predictions):
-        """
-        Получает высокий конфиденс и соответствующие боксы
-        """
-        #print('gbi', good_boxes_idx)
-        human_conf = []
-        for idx in good_boxes_idx:
-            human_conf.append(cls_predictions[idx][0])
-        human_conf = np.array(human_conf)
-        human_conf_idx = np.where(human_conf > 0.75)[0].tolist()
-        #print(human_conf_idx)
-        #human_conf = human_conf[human_conf > 0.75].tolist()
-        return max(human_conf)
-        #human_boxes = get_human_boxes(boxes, good_boxes_idx, human_conf_idx)
+    #def get_human_conf(self, boxes, good_boxes_idx, cls_predictions):
+    #    """
+    #    Получает высокий конфиденс и соответствующие боксы
+    #    """
+    #    #print('gbi', good_boxes_idx)
+    #    human_conf = []
+    #    for idx in good_boxes_idx:
+    #        human_conf.append(cls_predictions[idx][0])
+    #    human_conf = np.array(human_conf)
+    #    human_conf_idx = np.where(human_conf > 0.75)[0].tolist()
+    #    #print(human_conf_idx)
+    #    #human_conf = human_conf[human_conf > 0.75].tolist()
+    #    return max(human_conf)
+    #    #human_boxes = get_human_boxes(boxes, good_boxes_idx, human_conf_idx)
+
+    def get_human_conf_box(self, boxes, cls_predictions, gt_true):
+        max_conf_idx = np.argmax(cls_predictions[:, 0])
+        max_conf = cls_predictions[max_conf_idx, 0]
+        max_box = boxes[max_conf_idx]
+        iou = self.compute_iou(np.expand_dims(max_box, axis=0), gt_true)
+        return max_conf, iou[0], max_box.tolist()
+
+    def get_human_conf_box_iou(self, boxes, cls_predictions, gt_true):
+        max_conf_idx = np.argmax(cls_predictions[:, 0])
+        max_box = boxes[max_conf_idx]
+        iou = self.compute_iou(np.expand_dims(max_box, axis=0), gt_true)
+        if iou > 0.75:
+           max_conf = 1
+        else: 
+            max_conf = 0
+        return max_conf, iou[0], max_box.tolist()
+        
+
 

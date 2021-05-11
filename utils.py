@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pylab as plt
 import json
+import cv2
+
 
 def swap_xy(boxes):
     return tf.stack([boxes[:, 1], boxes[:, 0], boxes[:, 3], boxes[:, 2]], axis=-1)
@@ -214,3 +216,22 @@ def get_json_data(json_path):
     with open(json_path, 'rb') as read_file:
         ann = json.load(read_file, encoding="utf8")
     return ann
+
+
+def load_history(history_dir_path, history_form, sizes, folds=5):
+    data = {}
+    for size in sizes:
+        data[str(size)] = {}
+        for fold in range(folds):
+            json_history = os.path.join(history_dir_path, history_form.format(size, fold))
+            data[str(size)][str(fold)] = get_json_data(json_history)
+    return data
+
+
+def load_img(img_path, img_size):
+    image = tf.keras.preprocessing.image.load_img(img_path,
+                                              color_mode = "grayscale",
+                                              target_size=img_size)
+    img_array = tf.keras.preprocessing.image.img_to_array(image)
+    img_array /= 255
+    return image, img_array
